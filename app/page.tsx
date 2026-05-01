@@ -1,8 +1,14 @@
+'use server';
+
 import { auth } from '@/lib/auth/server';
 import Link from 'next/link';
+import { signout } from './auth/sign-out/actions';
 
-// Server components using auth methods must be rendered dynamically
-export const dynamic = 'force-dynamic';
+async function handleSignout(formData: FormData) {
+  await signout(null, formData);
+}
+
+// export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const { data: session } = await auth.getSession();
@@ -13,6 +19,14 @@ export default async function Home() {
         <h1 className="mb-4 text-4xl">
           Logged in as <span className="font-bold underline">{session.user.name}</span>
         </h1>
+        <form action={handleSignout}>
+          <button
+            type="submit"
+            className="inline-flex text-lg text-indigo-400 hover:underline"
+          >
+            Sign out
+          </button>
+        </form>
       </div>
     );
   }
