@@ -1,6 +1,8 @@
 'use client';
 
-const messages = [
+import { useState } from 'react';
+
+const seedMessages = [
   {
     id: 1,
     platform: 'slack',
@@ -86,14 +88,186 @@ const platformIconMap: Record<string, React.ReactNode> = {
   ),
 };
 
+type GmailMessage = {
+  id: string;
+  snippet: string;
+  from: string;
+  subject: string;
+  date: string;
+  webLink: string;
+};
+
+type GmailMessageDetail = {
+  id: string;
+  subject: string;
+  from: string;
+  date: string;
+  webLink: string;
+  bodyText: string;
+  bodyHtml: string;
+};
+
+type RecentMessage = {
+  id: string | number;
+  platform: string;
+  sender: string;
+  avatar: string;
+  avatarColor: string;
+  preview: string;
+  time: string;
+  unread: boolean;
+  platformColor: string;
+  webLink?: string;
+};
+
+function getSenderName(fromRaw: string): string {
+  const trimmed = fromRaw.trim();
+  const withoutEmail = trimmed.split('<')[0]?.replace(/"/g, '').trim();
+  if (withoutEmail) {
+    return withoutEmail;
+  }
+
+  const emailMatch = trimmed.match(/<([^>]+)>/);
+  if (emailMatch?.[1]) {
+    return emailMatch[1];
+  }
+
+  return trimmed || 'Unknown sender';
+}
+
+function getInitials(name: string): string {
+  const parts = name
+    .split(' ')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'GM';
+  }
+
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
+
+function formatGmailTime(dateValue: string): string {
+  if (!dateValue) {
+    return 'now';
+  }
+
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'now';
+  }
+
+  return parsed.toLocaleDateString();
+}
+
 export default function MainPanel() {
+  const [gmailMessages, setGmailMessages] = useState<GmailMessage[]>([]);
+  const [gmailLoading, setGmailLoading] = useState(false);
+  const [gmailError, setGmailError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [selectedMessageDetail, setSelectedMessageDetail] =
+    useState<GmailMessageDetail | null>(null);
+  const [messageDetailLoading, setMessageDetailLoading] = useState(false);
+  const [messageDetailError, setMessageDetailError] = useState<string | null>(null);
+
+  const loadGmailMessages = async () => {
+    setGmailLoading(true);
+    setGmailError(null);
+
+    try {
+      const response = await fetch('/api/gmail/messages', {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      const data = (await response.json()) as {
+        messages?: GmailMessage[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Failed to load Gmail messages.');
+      }
+
+      setGmailMessages(data.messages ?? []);
+      setCurrentPage(1);
+      setSelectedMessageId(null);
+      setSelectedMessageDetail(null);
+      setMessageDetailError(null);
+    } catch (error) {
+      setGmailError(error instanceof Error ? error.message : 'Failed to load Gmail messages.');
+    } finally {
+      setGmailLoading(false);
+    }
+  };
+
+  const loadMessageDetail = async (messageId: string) => {
+    setSelectedMessageId(messageId);
+    setMessageDetailLoading(true);
+    setMessageDetailError(null);
+
+    try {
+      const response = await fetch(`/api/gmail/messages/${encodeURIComponent(messageId)}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      const data = (await response.json()) as {
+        message?: GmailMessageDetail;
+        error?: string;
+      };
+
+      if (!response.ok || !data.message) {
+        throw new Error(data.error ?? 'Failed to load message body.');
+      }
+
+      setSelectedMessageDetail(data.message);
+    } catch (error) {
+      setSelectedMessageDetail(null);
+      setMessageDetailError(error instanceof Error ? error.message : 'Failed to load message body.');
+    } finally {
+      setMessageDetailLoading(false);
+    }
+  };
+
+  const isUsingGmail = gmailMessages.length > 0;
+  const recentMessages: RecentMessage[] = isUsingGmail
+    ? gmailMessages.map((message) => {
+          const sender = getSenderName(message.from);
+
+          return {
+            id: message.id,
+            platform: 'email',
+            sender,
+            avatar: getInitials(sender),
+            avatarColor: 'from-sky-500 to-blue-600',
+            preview: message.snippet || '(No preview text)',
+            time: formatGmailTime(message.date),
+            unread: false,
+            platformColor: 'bg-sky-500',
+            webLink: message.webLink,
+          };
+        })
+    : seedMessages;
+  const pageSize = 20;
+  const totalPages = Math.max(1, Math.ceil(recentMessages.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const visibleMessages = recentMessages.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="flex flex-1 flex-col min-h-screen overflow-hidden">
       {/* Top bar */}
       <header className="flex items-center justify-between px-8 h-16 border-b border-white/[0.06] shrink-0">
         <div>
           <h1 className="text-white font-semibold text-base">All Messages</h1>
-          <p className="text-white/35 text-xs mt-0.5">24 unread across 5 platforms</p>
+          <p className="text-white/35 text-xs mt-0.5">
+            {isUsingGmail
+              ? `${recentMessages.length} Gmail emails in Recent`
+              : `${recentMessages.length} sample messages`}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -115,6 +289,36 @@ export default function MainPanel() {
         </div>
       </header>
 
+      <div className="px-8 py-4 border-b border-white/[0.06] bg-white/[0.02]">
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/gmail/connect"
+            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 transition-colors text-white text-sm font-medium px-3 py-1.5 rounded-lg"
+          >
+            Connect Gmail
+          </a>
+          <button
+            onClick={() => {
+              void loadGmailMessages();
+            }}
+            className="inline-flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] transition-colors text-white text-sm font-medium px-3 py-1.5 rounded-lg border border-white/[0.08]"
+          >
+            Refresh Gmail
+          </button>
+          <span className="text-xs text-white/40">
+            {gmailLoading ? 'Loading...' : `${gmailMessages.length} emails loaded`}
+          </span>
+        </div>
+
+        {gmailError && <p className="text-xs text-red-300 mt-2">{gmailError}</p>}
+
+        {!gmailError && gmailMessages.length > 0 && (
+          <p className="text-xs text-emerald-300 mt-2">
+            Gmail connected. Showing all fetched emails in the Recent list.
+          </p>
+        )}
+      </div>
+
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Message list */}
@@ -124,10 +328,16 @@ export default function MainPanel() {
             <button className="text-xs text-white/30 hover:text-white/60 transition-colors">Mark all read</button>
           </div>
 
-          {messages.map((msg) => (
-            <button
+          {visibleMessages.map((msg, index) => (
+            <div
               key={msg.id}
-              className={`flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.04] ${msg.id === 1 ? 'bg-white/[0.06]' : ''}`}
+              onClick={() => {
+                if (!isUsingGmail || typeof msg.id !== 'string') {
+                  return;
+                }
+                void loadMessageDetail(msg.id);
+              }}
+              className={`flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.04] ${msg.id === 1 ? 'bg-white/[0.06]' : ''} ${isUsingGmail ? 'cursor-pointer' : ''} ${selectedMessageId === msg.id ? 'bg-white/[0.08]' : ''}`}
             >
               {/* Avatar */}
               <div className="relative shrink-0">
@@ -146,37 +356,120 @@ export default function MainPanel() {
                   <span className={`text-sm font-medium truncate ${msg.unread ? 'text-white' : 'text-white/60'}`}>
                     {msg.sender}
                   </span>
-                  <span className="text-[11px] text-white/25 shrink-0">{msg.time}</span>
+                  <span className="text-[11px] text-white/25 shrink-0">
+                    #{startIndex + index + 1} • {msg.time}
+                  </span>
                 </div>
                 <p className={`text-xs truncate ${msg.unread ? 'text-white/60' : 'text-white/30'}`}>
                   {msg.preview}
                 </p>
+                {msg.webLink && (
+                  <a
+                    href={msg.webLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="inline-flex mt-2 text-[11px] text-sky-300 hover:text-sky-200 underline underline-offset-2"
+                  >
+                    Open email
+                  </a>
+                )}
               </div>
 
               {/* Unread dot */}
               {msg.unread && (
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0 mt-2" />
               )}
-            </button>
+            </div>
           ))}
+
+          {isUsingGmail && (
+            <div className="px-4 py-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+              <button
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={safePage <= 1}
+                className="text-xs px-2 py-1 rounded border border-white/[0.1] text-white/70 disabled:text-white/25 disabled:border-white/[0.05]"
+              >
+                Previous
+              </button>
+              <span className="text-[11px] text-white/45">
+                Page {safePage} of {totalPages} (20 per page)
+              </span>
+              <button
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={safePage >= totalPages}
+                className="text-xs px-2 py-1 rounded border border-white/[0.1] text-white/70 disabled:text-white/25 disabled:border-white/[0.05]"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Empty state / conversation view */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-8">
+        <div className="flex-1 relative overflow-y-auto p-8">
           {/* Dot grid background */}
           <div className="absolute inset-0 pointer-events-none" style={{backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '28px 28px'}} />
 
-          <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4 mx-auto">
-              <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-              </svg>
+          {!isUsingGmail && (
+            <div className="relative flex h-full flex-col items-center justify-center gap-4 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                </svg>
+              </div>
+              <h2 className="text-white/50 font-medium text-base">Select a conversation</h2>
+              <p className="text-white/25 text-sm mt-1 max-w-xs">
+                Pick a message from the list to start reading, or compose a new one.
+              </p>
             </div>
-            <h2 className="text-white/50 font-medium text-base">Select a conversation</h2>
-            <p className="text-white/25 text-sm mt-1 max-w-xs">
-              Pick a message from the list to start reading, or compose a new one.
-            </p>
-          </div>
+          )}
+
+          {isUsingGmail && messageDetailLoading && (
+            <div className="relative flex h-full items-center justify-center text-white/60 text-sm">
+              Loading email body...
+            </div>
+          )}
+
+          {isUsingGmail && !messageDetailLoading && messageDetailError && (
+            <div className="relative rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
+              {messageDetailError}
+            </div>
+          )}
+
+          {isUsingGmail && !messageDetailLoading && !messageDetailError && !selectedMessageDetail && (
+            <div className="relative flex h-full items-center justify-center text-white/45 text-sm text-center">
+              Click an email in Recent to view the full body here.
+            </div>
+          )}
+
+          {isUsingGmail && !messageDetailLoading && selectedMessageDetail && (
+            <div className="relative max-w-3xl">
+              <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4 mb-4">
+                <div>
+                  <h2 className="text-white text-xl font-semibold">
+                    {selectedMessageDetail.subject || '(No subject)'}
+                  </h2>
+                  <p className="text-white/65 text-sm mt-1">{selectedMessageDetail.from}</p>
+                  <p className="text-white/40 text-xs mt-0.5">{formatGmailTime(selectedMessageDetail.date)}</p>
+                </div>
+                <a
+                  href={selectedMessageDetail.webLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex shrink-0 text-xs px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white"
+                >
+                  Open in Gmail
+                </a>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+                <pre className="whitespace-pre-wrap break-words text-sm text-white/85 font-sans">
+                  {selectedMessageDetail.bodyText || '(No readable email body found)'}
+                </pre>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
