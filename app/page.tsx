@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { signout } from './auth/sign-out/actions';
 
 async function handleSignout(formData: FormData) {
+  'use server';
   await signout(null, formData);
 }
 
