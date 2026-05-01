@@ -3,9 +3,11 @@
 import { auth } from '@/lib/auth/server';
 import Link from 'next/link';
 import { signout } from './auth/sign-out/actions';
+import Dashboard from '@/components/Dashboard';
 
 async function handleSignout(formData: FormData) {
   'use server';
+
   await signout(null, formData);
 }
 
@@ -16,18 +18,8 @@ export default async function Home() {
 
   if (session?.user) {
     return (
-      <div className="flex flex-col gap-2 min-h-screen items-center justify-center bg-gray-900">
-        <h1 className="mb-4 text-4xl">
-          Logged in as <span className="font-bold underline">{session.user.name}</span>
-        </h1>
-        <form action={handleSignout}>
-          <button
-            type="submit"
-            className="inline-flex text-lg text-indigo-400 hover:underline"
-          >
-            Sign out
-          </button>
-        </form>
+      <div className="flex min-h-screen">
+        <Dashboard />
       </div>
     );
   }
