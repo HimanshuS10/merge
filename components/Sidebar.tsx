@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
 
 const platforms = [
   {
@@ -84,10 +83,16 @@ const bottomLinks = [
   },
 ];
 
-export default function Sidebar() {
-  const [active, setActive] = useState('all');
-
-  const totalBadge = platforms.filter(p => p.id !== 'all').reduce((sum, p) => sum + (p.badge ?? 0), 0);
+export default function Sidebar({
+  activePlatform,
+  onPlatformChange,
+}: {
+  activePlatform: string;
+  onPlatformChange: (id: string) => void;
+}) {
+  const totalBadge = platforms
+    .filter((p) => p.id !== 'all')
+    .reduce((sum, p) => sum + (p.badge ?? 0), 0);
 
   return (
     <aside className="flex flex-col w-64 min-h-screen bg-[#0c0f1a] border-r border-white/[0.06]">
@@ -101,28 +106,23 @@ export default function Sidebar() {
         <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 px-2 mb-1">Inbox</p>
 
         {platforms.map((platform) => {
-          const isActive = active === platform.id;
+          const isActive = activePlatform === platform.id;
           const count = platform.id === 'all' ? totalBadge : platform.badge;
 
           return (
             <button
               key={platform.id}
-              onClick={() => setActive(platform.id)}
+              onClick={() => onPlatformChange(platform.id)}
               className={`group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? 'bg-white/10 text-white shadow-sm'
                   : 'text-white/50 hover:bg-white/[0.05] hover:text-white/80'
               }`}
             >
-              {/* Icon */}
               <span className={`shrink-0 transition-colors ${isActive ? (platform.color ?? 'text-white') : (platform.color ? `${platform.color} opacity-60` : 'text-white/40 group-hover:text-white/60')}`}>
                 {platform.icon}
               </span>
-
-              {/* Label */}
               <span className="flex-1 text-left">{platform.label}</span>
-
-              {/* Badge */}
               {count ? (
                 <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center leading-none ${
                   isActive ? 'bg-white/20 text-white' : 'bg-white/[0.07] text-white/40'
@@ -147,7 +147,6 @@ export default function Sidebar() {
           </button>
         ))}
 
-        {/* User avatar */}
         <div className="flex items-center gap-3 px-3 py-2.5 mt-1 rounded-xl hover:bg-white/[0.05] cursor-pointer transition-all duration-150">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 shrink-0 flex items-center justify-center text-white text-xs font-bold">
             U
