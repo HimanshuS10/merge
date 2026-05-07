@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-      maxAge: tokenData.expires_in,
+      maxAge: 60 * 60 * 24 * 30,
     });
 
     if (tokenData.refresh_token) {

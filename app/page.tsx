@@ -18,8 +18,8 @@ export default async function Home() {
 
   if (session?.user) {
     return (
-      <div className="flex min-h-screen">
-        <Dashboard />
+      <div className="flex h-screen overflow-hidden">
+        <Dashboard user={session.user} />
       </div>
     );
   }

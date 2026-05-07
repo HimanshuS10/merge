@@ -3,6 +3,45 @@
 import { useState, useEffect, useRef } from 'react';
 
 
+const githubTypeIconMap: Record<string, React.ReactNode> = {
+  PullRequest: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354Z"/>
+    </svg>
+  ),
+  Issue: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
+      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/>
+    </svg>
+  ),
+  Release: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M2.5 7.775V2.75a.25.25 0 0 1 .25-.25h5.025a.25.25 0 0 1 .177.073l6.25 6.25a.25.25 0 0 1 0 .354l-5.025 5.025a.25.25 0 0 1-.354 0l-6.25-6.25a.25.25 0 0 1-.073-.177Zm-1.5 0V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.75 1.75 0 0 1 1 7.775ZM6 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+    </svg>
+  ),
+  CheckSuite: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm10.28-1.72-4.5 4.5a.75.75 0 0 1-1.06 0l-2-2a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l1.47 1.47 3.97-3.97a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"/>
+    </svg>
+  ),
+  Commit: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"/>
+    </svg>
+  ),
+  Discussion: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.457 1.457 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 1 1 1.06-1.06l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/>
+    </svg>
+  ),
+  RepositoryVulnerabilityAlert: (
+    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
+    </svg>
+  ),
+};
+
 const platformIconMap: Record<string, React.ReactNode> = {
   slack: (
     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
@@ -31,6 +70,34 @@ const platformIconMap: Record<string, React.ReactNode> = {
   ),
 };
 
+const platformAvatarMap: Record<string, { bg: string; icon: React.ReactNode }> = {
+  email: {
+    bg: 'bg-white/[0.06]',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="#EA4335"/>
+        <path d="M24 5.457L12 9.548 0 5.457C0 3.434 2.31 2.28 3.928 3.493L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="#FBBC04"/>
+      </svg>
+    ),
+  },
+  slack: {
+    bg: 'bg-white/[0.06]',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" fill="#E01E5A"/>
+      </svg>
+    ),
+  },
+  github: {
+    bg: 'bg-white/[0.06]',
+    icon: (
+      <svg className="w-5 h-5 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+      </svg>
+    ),
+  },
+};
+
 type GmailMessage = {
   id: string;
   snippet: string;
@@ -53,7 +120,18 @@ type GmailMessageDetail = {
 type SlackMessage = {
   ts: string;
   text: string;
-  user: string;
+  user: string | null;
+  user_name: string;
+  user_avatar: string | null;
+};
+
+type GitHubNotification = {
+  id: string;
+  subject: { title: string; url: string; type: string };
+  repository: { full_name: string; html_url: string };
+  reason: string;
+  unread: boolean;
+  updated_at: string;
 };
 
 type RecentMessage = {
@@ -67,6 +145,23 @@ type RecentMessage = {
   unread: boolean;
   platformColor: string;
   webLink?: string;
+  subjectType?: string;
+  userAvatar?: string | null;
+};
+
+type GitHubSubjectDetail = {
+  number: number;
+  title: string;
+  body: string | null;
+  state: string;
+  merged?: boolean;
+  mergeable_state?: string;
+  draft?: boolean;
+  user: { login: string };
+  html_url: string;
+  labels: { name: string; color: string }[];
+  head?: { ref: string };
+  base?: { ref: string };
 };
 
 function getSenderName(fromRaw: string): string {
@@ -97,7 +192,21 @@ function formatSlackTime(ts: string): string {
   return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function MainPanel({ activePlatform }: { activePlatform: string }) {
+function githubWebUrl(apiUrl: string): string {
+  return apiUrl
+    .replace('https://api.github.com/repos/', 'https://github.com/')
+    .replace('/pulls/', '/pull/');
+}
+
+type Counts = { email: number; slack: number; github: number };
+
+export default function MainPanel({
+  activePlatform,
+  onCountsChange,
+}: {
+  activePlatform: string;
+  onCountsChange?: (counts: Counts) => void;
+}) {
   // Gmail state
   const [gmailMessages, setGmailMessages] = useState<GmailMessage[]>([]);
   const [gmailLoading, setGmailLoading] = useState(false);
@@ -117,7 +226,19 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
   const [slackChannel, setSlackChannel] = useState('');
   const [slackChannels, setSlackChannels] = useState<{ id: string; name: string; is_member: boolean }[]>([]);
   const [slackChannelsLoading, setSlackChannelsLoading] = useState(false);
+  const [selectedSlackTs, setSelectedSlackTs] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // GitHub state
+  const [githubNotifications, setGithubNotifications] = useState<GitHubNotification[]>([]);
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [githubError, setGithubError] = useState<string | null>(null);
+  const [selectedGithubId, setSelectedGithubId] = useState<string | null>(null);
+  const [githubSubjectDetail, setGithubSubjectDetail] = useState<GitHubSubjectDetail | null>(null);
+  const [githubSubjectLoading, setGithubSubjectLoading] = useState(false);
+
+  // "All" tab — tracks which platform's detail to show after clicking a message
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
 
   const loadGmailMessages = async () => {
     setGmailLoading(true);
@@ -196,12 +317,78 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
     }
   };
 
+  const loadGithubNotifications = async () => {
+    setGithubLoading(true);
+    setGithubError(null);
+    try {
+      const response = await fetch('/api/github/notifications', { cache: 'no-store' });
+      const data = (await response.json()) as GitHubNotification[] | { error: string };
+      if (!response.ok || !Array.isArray(data)) {
+        throw new Error((data as { error: string }).error ?? 'Failed to load notifications.');
+      }
+      setGithubNotifications(data);
+    } catch (error) {
+      setGithubError(error instanceof Error ? error.message : 'Failed to load notifications.');
+    } finally {
+      setGithubLoading(false);
+    }
+  };
+
+  const loadGithubSubject = async (apiUrl: string, id: string) => {
+    setSelectedGithubId(id);
+    setGithubSubjectDetail(null);
+    setGithubSubjectLoading(true);
+    try {
+      const response = await fetch(`/api/github/subject?url=${encodeURIComponent(apiUrl)}`, { cache: 'no-store' });
+      const data = (await response.json()) as GitHubSubjectDetail | { error: string };
+      if (!response.ok || !('html_url' in data)) throw new Error((data as { error: string }).error);
+      setGithubSubjectDetail(data as GitHubSubjectDetail);
+    } catch {
+      setGithubSubjectDetail(null);
+    } finally {
+      setGithubSubjectLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    onCountsChange?.({
+      email: gmailMessages.length,
+      slack: slackMessages.length,
+      github: githubNotifications.length,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gmailMessages.length, slackMessages.length, githubNotifications.length]);
+
+  useEffect(() => {
+    if (activePlatform !== 'email' && activePlatform !== 'all') return;
+    if (gmailMessages.length === 0) void loadGmailMessages();
+    if (activePlatform === 'all') {
+      if (githubNotifications.length === 0) void loadGithubNotifications();
+      // Load Slack: use existing channel if available, otherwise fetch channels first
+      if (slackMessages.length === 0) {
+        if (slackChannel) {
+          void loadSlackMessages(slackChannel);
+        } else {
+          void loadSlackChannels();
+        }
+      }
+      setSelectedPlatform(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePlatform]);
+
   useEffect(() => {
     if (activePlatform !== 'slack') {
       if (pollRef.current) clearInterval(pollRef.current);
       return;
     }
     void loadSlackChannels();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePlatform]);
+
+  useEffect(() => {
+    if (activePlatform !== 'github') return;
+    void loadGithubNotifications();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePlatform]);
 
@@ -213,45 +400,63 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slackChannel]);
 
+  const gmailMapped: RecentMessage[] = gmailMessages.map((message) => {
+    const sender = getSenderName(message.from);
+    return {
+      id: message.id,
+      platform: 'email',
+      sender,
+      avatar: getInitials(sender),
+      avatarColor: 'from-sky-500 to-blue-600',
+      preview: message.snippet || '(No preview text)',
+      time: formatGmailTime(message.date),
+      unread: false,
+      platformColor: 'bg-sky-500',
+      webLink: message.webLink,
+    };
+  });
+
+  const githubMapped: RecentMessage[] = githubNotifications.map((n) => ({
+    id: n.id,
+    platform: 'github',
+    sender: n.repository.full_name,
+    avatar: n.repository.full_name.split('/')[0]?.slice(0, 2).toUpperCase() ?? 'GH',
+    avatarColor: 'from-gray-600 to-gray-800',
+    preview: n.subject.title,
+    time: new Date(n.updated_at).toLocaleDateString(),
+    unread: n.unread,
+    platformColor: 'bg-[#1a1f2e]',
+    subjectType: n.subject.type,
+  }));
+
+  const slackMapped: RecentMessage[] = slackMessages.map((m) => ({
+    id: m.ts,
+    platform: 'slack',
+    sender: m.user_name,
+    avatar: m.user_avatar ?? m.user_name.slice(0, 2).toUpperCase(),
+    avatarColor: 'from-pink-500 to-rose-500',
+    preview: m.text || '(empty message)',
+    time: formatSlackTime(m.ts),
+    unread: false,
+    platformColor: 'bg-[#E01E5A]',
+    userAvatar: m.user_avatar,
+  }));
+
   // Build message list based on active platform
   const recentMessages: RecentMessage[] = (() => {
-    if (activePlatform === 'slack' && slackMessages.length > 0) {
-      return slackMessages.map((m) => ({
-        id: m.ts,
-        platform: 'slack',
-        sender: m.user || 'Slack User',
-        avatar: m.user ? m.user.slice(0, 2).toUpperCase() : 'SL',
-        avatarColor: 'from-pink-500 to-rose-500',
-        preview: m.text || '(empty message)',
-        time: formatSlackTime(m.ts),
-        unread: false,
-        platformColor: 'bg-[#E01E5A]',
-      }));
+    if (activePlatform === 'all') {
+      return [...gmailMapped, ...githubMapped, ...slackMapped];
     }
-
-    if ((activePlatform === 'email' || activePlatform === 'all') && gmailMessages.length > 0) {
-      return gmailMessages.map((message) => {
-        const sender = getSenderName(message.from);
-        return {
-          id: message.id,
-          platform: 'email',
-          sender,
-          avatar: getInitials(sender),
-          avatarColor: 'from-sky-500 to-blue-600',
-          preview: message.snippet || '(No preview text)',
-          time: formatGmailTime(message.date),
-          unread: false,
-          platformColor: 'bg-sky-500',
-          webLink: message.webLink,
-        };
-      });
-    }
-
+    if (activePlatform === 'slack') return slackMapped;
+    if (activePlatform === 'github') return githubMapped;
+    if (activePlatform === 'email') return gmailMapped;
     return [];
   })();
 
-  const isUsingGmail = activePlatform !== 'slack' && gmailMessages.length > 0;
-  const isUsingSlack = activePlatform === 'slack' && slackMessages.length > 0;
+  const effectivePlatform = activePlatform === 'all' ? selectedPlatform : activePlatform;
+  const isUsingGmail = effectivePlatform === 'email' && gmailMessages.length > 0;
+  const isUsingSlack = effectivePlatform === 'slack' && slackMessages.length > 0;
+  const isUsingGithub = effectivePlatform === 'github' && githubNotifications.length > 0;
 
   const pageSize = 20;
   const totalPages = Math.max(1, Math.ceil(recentMessages.length / pageSize));
@@ -264,14 +469,18 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
       ? 'All Messages'
       : activePlatform.charAt(0).toUpperCase() + activePlatform.slice(1);
 
-  const headerSub = isUsingGmail
+  const headerSub = activePlatform === 'all'
+    ? `${gmailMapped.length} emails · ${githubMapped.length} notifications · ${slackMapped.length} Slack`
+    : isUsingGmail
     ? `${recentMessages.length} Gmail emails`
     : isUsingSlack
     ? `${recentMessages.length} Slack messages`
+    : isUsingGithub
+    ? `${recentMessages.length} notifications`
     : 'No messages yet';
 
   return (
-    <div className="flex flex-1 flex-col min-h-screen overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden">
       {/* Top bar */}
       <header className="flex items-center justify-between px-8 h-16 border-b border-white/[0.06] shrink-0">
         <div>
@@ -279,25 +488,20 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
           <p className="text-white/35 text-xs mt-0.5">{headerSub}</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-white/[0.05] border border-white/[0.07] rounded-lg px-3 py-1.5 w-52">
-            <svg className="w-3.5 h-3.5 text-white/30 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span className="text-white/30 text-sm">Search messages…</span>
-          </div>
-
-          <button className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 transition-colors text-white text-sm font-medium px-3 py-1.5 rounded-lg">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Compose
-          </button>
-        </div>
       </header>
 
+      {/* All tab loading strip */}
+      {activePlatform === 'all' && (gmailLoading || githubLoading || slackLoading) && (
+        <div className="px-8 py-2 border-b border-white/[0.06] bg-white/[0.02] flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white/70 animate-spin" />
+          <span className="text-xs text-white/40">
+            {[gmailLoading && 'Gmail', githubLoading && 'GitHub', slackLoading && 'Slack'].filter(Boolean).join(', ')} loading…
+          </span>
+        </div>
+      )}
+
       {/* Gmail toolbar */}
-      {(activePlatform === 'email' || activePlatform === 'all') && (
+      {activePlatform === 'email' && (
         <div className="px-8 py-4 border-b border-white/[0.06] bg-white/[0.02]">
           <div className="flex items-center gap-2">
             <a
@@ -371,30 +575,76 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
         </div>
       )}
 
+      {/* GitHub toolbar */}
+      {activePlatform === 'github' && (
+        <div className="px-8 py-4 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href="/api/github/install"
+              className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium px-3 py-1.5 rounded-lg border border-white/20"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+              </svg>
+              Connect GitHub
+            </a>
+            <button
+              onClick={() => { void loadGithubNotifications(); }}
+              disabled={githubLoading}
+              className="inline-flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] transition-colors text-white text-sm font-medium px-3 py-1.5 rounded-lg border border-white/[0.08] disabled:opacity-40"
+            >
+              {githubLoading ? 'Loading...' : 'Refresh'}
+            </button>
+            {githubNotifications.length > 0 && (
+              <span className="text-xs text-white/40">{githubNotifications.length} notifications</span>
+            )}
+          </div>
+          {githubError && <p className="text-xs text-red-300 mt-2">{githubError}</p>}
+          {!githubError && githubNotifications.length > 0 && (
+            <p className="text-xs text-emerald-300 mt-2">GitHub connected.</p>
+          )}
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Message list */}
         <div className="w-80 border-r border-white/[0.06] flex flex-col overflow-y-auto">
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-widest text-white/25">Recent</span>
-            <button className="text-xs text-white/30 hover:text-white/60 transition-colors">Mark all read</button>
           </div>
 
           {visibleMessages.map((msg, index) => (
             <div
               key={msg.id}
               onClick={() => {
-                if (!isUsingGmail || typeof msg.id !== 'string') return;
-                void loadMessageDetail(msg.id);
+                if (msg.platform === 'email' && typeof msg.id === 'string') {
+                  setSelectedPlatform('email');
+                  void loadMessageDetail(msg.id);
+                } else if (msg.platform === 'slack') {
+                  setSelectedPlatform('slack');
+                  setSelectedSlackTs(msg.id as string);
+                } else if (msg.platform === 'github') {
+                  setSelectedPlatform('github');
+                  const n = githubNotifications.find((n) => n.id === msg.id);
+                  if (n) void loadGithubSubject(n.subject.url, n.id);
+                }
               }}
-              className={`flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.04] ${isUsingGmail ? 'cursor-pointer' : ''} ${selectedMessageId === msg.id ? 'bg-white/[0.08]' : ''}`}
+              className={`flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.04] cursor-pointer ${selectedMessageId === msg.id || selectedSlackTs === msg.id || selectedGithubId === msg.id ? 'bg-white/[0.08]' : ''}`}
             >
               <div className="relative shrink-0">
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${msg.avatarColor} flex items-center justify-center text-white text-xs font-bold`}>
-                  {msg.avatar}
-                </div>
+                {msg.userAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={msg.userAvatar} alt={msg.sender} className="w-9 h-9 rounded-full object-cover" />
+                ) : (
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${platformAvatarMap[msg.platform]?.bg ?? 'bg-white/[0.06]'}`}>
+                    {platformAvatarMap[msg.platform]?.icon}
+                  </div>
+                )}
                 <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full ${msg.platformColor} flex items-center justify-center text-white`}>
-                  {platformIconMap[msg.platform]}
+                  {msg.platform === 'github' && msg.subjectType
+                    ? githubTypeIconMap[msg.subjectType] ?? platformIconMap['github']
+                    : platformIconMap[msg.platform]}
                 </span>
               </div>
 
@@ -459,7 +709,7 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
             style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '28px 28px' }}
           />
 
-          {!isUsingGmail && !isUsingSlack && (
+          {!isUsingGmail && !isUsingSlack && !isUsingGithub && (
             <div className="relative flex h-full flex-col items-center justify-center gap-4 text-center">
               <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4 mx-auto">
                 <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -519,11 +769,155 @@ export default function MainPanel({ activePlatform }: { activePlatform: string }
             </div>
           )}
 
-          {isUsingSlack && (
+          {isUsingGithub && !selectedGithubId && (
             <div className="relative flex h-full items-center justify-center text-white/45 text-sm text-center">
-              Select a Slack message from the list to view it here.
+              Click a notification to view details here.
             </div>
           )}
+
+          {isUsingGithub && selectedGithubId && githubSubjectLoading && (
+            <div className="relative flex h-full items-center justify-center text-white/60 text-sm">
+              Loading details...
+            </div>
+          )}
+
+          {isUsingGithub && selectedGithubId && !githubSubjectLoading && (() => {
+            const n = githubNotifications.find((n) => n.id === selectedGithubId);
+            if (!n) return null;
+            const detail = githubSubjectDetail;
+            const webUrl = detail?.html_url ?? githubWebUrl(n.subject.url);
+            const typeLabel = n.subject.type === 'PullRequest' ? 'Pull Request' : n.subject.type;
+            const reasonLabel = n.reason.replace(/_/g, ' ');
+            const isMerged = detail?.merged === true;
+            const isClosed = detail?.state === 'closed';
+            const hasMergeConflict = detail?.mergeable_state === 'dirty';
+            const isDraft = detail?.draft === true;
+
+            const stateColor = isMerged
+              ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+              : isClosed
+              ? 'bg-red-500/20 text-red-300 border-red-500/30'
+              : isDraft
+              ? 'bg-white/[0.08] text-white/50 border-white/[0.1]'
+              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+
+            const stateLabel = isMerged ? 'Merged' : isClosed ? 'Closed' : isDraft ? 'Draft' : 'Open';
+
+            return (
+              <div className="relative max-w-3xl">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${stateColor}`}>
+                        {githubTypeIconMap[n.subject.type] && (
+                          <span className="shrink-0">{githubTypeIconMap[n.subject.type]}</span>
+                        )}
+                        {detail ? stateLabel : typeLabel}
+                      </span>
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                        {reasonLabel}
+                      </span>
+                      {hasMergeConflict && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                          <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
+                          </svg>
+                          Merge conflict
+                        </span>
+                      )}
+                      {detail?.labels.map((label) => (
+                        <span
+                          key={label.name}
+                          className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-white/[0.1]"
+                          style={{ color: `#${label.color}`, borderColor: `#${label.color}33` }}
+                        >
+                          {label.name}
+                        </span>
+                      ))}
+                    </div>
+                    <h2 className="text-white text-xl font-semibold leading-snug">{n.subject.title}</h2>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      <p className="text-white/45 text-sm">{n.repository.full_name}</p>
+                      {detail?.user && (
+                        <p className="text-white/30 text-sm">by {detail.user.login}</p>
+                      )}
+                    </div>
+                    {detail?.head && detail?.base && (
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-white/40 font-mono">
+                        <span className="bg-white/[0.06] px-1.5 py-0.5 rounded">{detail.head.ref}</span>
+                        <svg className="w-3 h-3 text-white/25" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                        <span className="bg-white/[0.06] px-1.5 py-0.5 rounded">{detail.base.ref}</span>
+                      </div>
+                    )}
+                    <p className="text-white/25 text-xs mt-1">{new Date(n.updated_at).toLocaleString()}</p>
+                  </div>
+                  <a
+                    href={webUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex shrink-0 items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    Open on GitHub
+                  </a>
+                </div>
+
+                {/* Body */}
+                {detail?.body ? (
+                  <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+                    <pre className="whitespace-pre-wrap break-words text-sm text-white/75 font-sans leading-relaxed">
+                      {detail.body.length > 1000 ? detail.body.slice(0, 1000) + '…' : detail.body}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-sm text-white/30 italic">
+                    No description provided.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {isUsingSlack && !selectedSlackTs && (
+            <div className="relative flex h-full items-center justify-center text-white/45 text-sm text-center">
+              Click a message to read it here.
+            </div>
+          )}
+
+          {isUsingSlack && selectedSlackTs && (() => {
+            const msg = slackMessages.find((m) => m.ts === selectedSlackTs);
+            if (!msg) return null;
+            return (
+              <div className="relative max-w-3xl">
+                <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    {msg.user_avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={msg.user_avatar} alt={msg.user_name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                        {msg.user_name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-white text-base font-semibold">{msg.user_name}</h2>
+                      <p className="text-white/40 text-xs mt-0.5">{formatSlackTime(msg.ts)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+                  <p className="whitespace-pre-wrap break-words text-sm text-white/85">
+                    {msg.text || '(empty message)'}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

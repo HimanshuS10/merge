@@ -39,7 +39,7 @@ export async function GET() {
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: refreshed.expires_in,
+        maxAge: 60 * 60 * 24 * 30,
       });
 
       cookieStore.set("gmail_access_expires_at", String(nextExpiresAt), {

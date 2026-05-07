@@ -17,9 +17,9 @@ function shouldRefresh(expiresAtRaw: string | undefined): boolean {
 
 export async function GET(
   _request: Request,
-  context: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
   const cookieStore = await cookies();
   let accessToken = cookieStore.get("gmail_access_token")?.value;
   const refreshToken = cookieStore.get("gmail_refresh_token")?.value;
@@ -43,7 +43,7 @@ export async function GET(
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: refreshed.expires_in,
+        maxAge: 60 * 60 * 24 * 30,
       });
 
       cookieStore.set("gmail_access_expires_at", String(nextExpiresAt), {
