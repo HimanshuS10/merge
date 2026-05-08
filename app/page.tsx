@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth/server';
 import Link from 'next/link';
 import Dashboard from '@/components/Dashboard';
 
-// export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const { data: session } = await auth.getSession();
