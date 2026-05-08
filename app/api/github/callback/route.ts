@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { saveIntegration } from '@/lib/integrations';
+import { auth } from '@/lib/auth/server';
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code');
+
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
+    return NextResponse.redirect(new URL('/?error=not_authenticated', req.url));
+  }
 
   const res = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
@@ -16,15 +23,12 @@ export async function GET(req: NextRequest) {
   const data = await res.json() as { access_token?: string; error?: string };
 
   if (!data.access_token) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/?error=github_auth_failed`);
+    return NextResponse.redirect(new URL('/?error=github_auth_failed', req.url));
   }
 
-  const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/`);
-  response.cookies.set('github_access_token', data.access_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30,
+  await saveIntegration(session.user.id, 'github', {
+    access_token: data.access_token,
   });
-  return response;
+
+  return NextResponse.redirect(new URL('/', req.url));
 }

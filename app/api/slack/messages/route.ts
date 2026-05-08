@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getIntegration } from '@/lib/integrations';
+import { auth } from '@/lib/auth/server';
 
 type RawMessage = { ts: string; text: string; user?: string; bot_id?: string; username?: string };
 type UserProfile = { display_name: string; real_name: string; image_48: string };
@@ -19,12 +21,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'channel param required' }, { status: 400 });
   }
 
-  const token =
-    req.cookies.get('slack_access_token')?.value ?? process.env.SLACK_BOT_TOKEN;
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+  }
 
-  if (!token) {
+  const integration = await getIntegration(session.user.id, 'slack');
+  if (!integration) {
     return NextResponse.json({ error: 'Slack not connected' }, { status: 401 });
   }
+
+  const token = integration.access_token;
 
   const res = await fetch(
     `https://slack.com/api/conversations.history?channel=${encodeURIComponent(channelId)}&limit=50`,
@@ -39,7 +46,6 @@ export async function GET(req: NextRequest) {
 
   const messages = data.messages ?? [];
 
-  // Resolve unique user IDs to profiles in parallel
   const userIds = [...new Set(messages.map((m) => m.user).filter((id): id is string => !!id))];
   const profileEntries = await Promise.all(
     userIds.map(async (id) => [id, await fetchUserProfile(id, token)] as const)
