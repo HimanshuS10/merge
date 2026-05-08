@@ -3,7 +3,8 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\himse\\\\Desktop\\\\School\\\\Side Projects\\\\Merge\\\\merge\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\himse\\\\Desktop\\\\School\\\\Side Projects\\\\Merge\\\\merge\\\\app\\\\auth\")"
     ]
   }
 }

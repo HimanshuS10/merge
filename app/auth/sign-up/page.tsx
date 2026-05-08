@@ -9,89 +9,68 @@ export default function SignUpForm() {
     const [state, formAction, isPending] = useActionState(signUpWithEmail, null);
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-[#080b14] p-4 overflow-hidden">
-            {/* Dot grid */}
-            <div className="absolute inset-0 pointer-events-none" style={{backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px'}} />
-            {/* Glowing orbs */}
-            <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-violet-600/25 blur-[120px] pointer-events-none" />
-            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-cyan-500/20 blur-[120px] pointer-events-none" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-indigo-600/10 blur-[80px] pointer-events-none" />
-
-            <div className="relative w-full max-w-md">
-
+        <div className="min-h-screen flex items-center justify-center bg-[#080b14] p-4">
+            <div className="w-full max-w-sm">
                 {/* Card */}
-                <div className="bg-white rounded-2xl shadow-2xl shadow-black/40 border border-white/10 ring-1 ring-violet-500/20 px-8 pt-8 pb-7">
-                    {/* Icon */}
-                    <div className="flex justify-center mb-5">
-                        <Image src="/image.png" alt="Merge" width={160} height={84} className="object-contain" />
+                <div className="bg-[#0c0f1a] border border-white/[0.06] rounded-2xl px-8 pt-8 pb-7">
+                    {/* Logo */}
+                    <div className="flex justify-center mb-8">
+                        <Image
+                            src="/LogoMain.png"
+                            alt="Merge"
+                            width={120}
+                            height={0}
+                            sizes="100vw"
+                            style={{ width: '45%', height: 'auto' }}
+                            className="object-contain"
+                        />
                     </div>
 
-                    <h1 className="text-[22px] font-bold text-gray-900 text-center mb-1">Create your account</h1>
-                    <p className="text-sm text-gray-500 text-center mb-6">
+                    <h1 className="text-lg font-semibold text-white text-center mb-1">Create your account</h1>
+                    <p className="text-sm text-white/35 text-center mb-7">
                         One inbox, every conversation.
                     </p>
 
                     <form action={formAction} className="space-y-4">
                         {/* Name */}
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label htmlFor="name" className="block text-xs font-medium text-white/50 mb-1.5 uppercase tracking-wide">
                                 Full name
                             </label>
-                            <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </span>
-                                <input
-                                    id="name" name="name" type="text" required
-                                    placeholder="John Doe"
-                                    className="block w-full pl-9 pr-3 py-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                                />
-                            </div>
+                            <input
+                                id="name" name="name" type="text" required
+                                placeholder="John Doe"
+                                className="block w-full px-3 py-2.5 text-sm text-white bg-white/[0.03] border border-white/[0.06] rounded-xl placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all"
+                            />
                         </div>
 
                         {/* Email */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label htmlFor="email" className="block text-xs font-medium text-white/50 mb-1.5 uppercase tracking-wide">
                                 Email
                             </label>
-                            <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                </span>
-                                <input
-                                    id="email" name="email" type="email" required
-                                    placeholder="you@company.com"
-                                    className="block w-full pl-9 pr-3 py-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                                />
-                            </div>
+                            <input
+                                id="email" name="email" type="email" required
+                                placeholder="you@company.com"
+                                className="block w-full px-3 py-2.5 text-sm text-white bg-white/[0.03] border border-white/[0.06] rounded-xl placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all"
+                            />
                         </div>
 
                         {/* Password */}
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label htmlFor="password" className="block text-xs font-medium text-white/50 mb-1.5 uppercase tracking-wide">
                                 Password
                             </label>
-                            <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                </span>
-                                <input
-                                    id="password" name="password" type="password" required
-                                    placeholder="••••••••"
-                                    className="block w-full pl-9 pr-3 py-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                                />
-                            </div>
+                            <input
+                                id="password" name="password" type="password" required
+                                placeholder="••••••••"
+                                className="block w-full px-3 py-2.5 text-sm text-white bg-white/[0.03] border border-white/[0.06] rounded-xl placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 transition-all"
+                            />
                         </div>
 
                         {/* Error */}
                         {state?.error && (
-                            <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3.5 py-2.5 text-sm text-red-600">
+                            <div className="flex items-center gap-2 rounded-xl bg-red-500/[0.08] border border-red-500/20 px-3.5 py-2.5 text-sm text-red-400/80">
                                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                                 </svg>
@@ -103,22 +82,20 @@ export default function SignUpForm() {
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="w-full py-2.5 px-4 bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer"
+                            className="w-full py-2.5 px-4 bg-white hover:bg-white/90 active:bg-white/80 text-[#080b14] text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:cursor-pointer mt-2"
                         >
                             {isPending ? 'Creating account…' : 'Get Started'}
                         </button>
                     </form>
 
-                    {/* Footer link */}
-                    <p className="text-center text-sm text-gray-500 mt-6">
+                    {/* Footer */}
+                    <p className="text-center text-xs text-white/25 mt-6">
                         Already have an account?{' '}
-                        <Link href="/auth/sign-in" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                        <Link href="/auth/sign-in" className="text-white/50 hover:text-white/80 transition-colors">
                             Sign in
                         </Link>
                     </p>
                 </div>
-
-
             </div>
         </div>
     );
