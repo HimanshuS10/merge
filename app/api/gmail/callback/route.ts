@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForTokens } from '@/lib/gmail';
+import { saveIntegration } from '@/lib/integrations';
+import { auth } from '@/lib/auth/server';
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -17,34 +19,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid OAuth state.' }, { status: 400 });
   }
 
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
+    return NextResponse.redirect(new URL('/?error=not_authenticated', request.url));
+  }
+
   try {
     const tokenData = await exchangeCodeForTokens(code);
     const expiresAt = Date.now() + tokenData.expires_in * 1000;
 
-    cookieStore.set('gmail_access_token', tokenData.access_token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    });
-
-    if (tokenData.refresh_token) {
-      cookieStore.set('gmail_refresh_token', tokenData.refresh_token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 30,
-      });
-    }
-
-    cookieStore.set('gmail_access_expires_at', String(expiresAt), {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
+    await saveIntegration(session.user.id, 'gmail', {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token ?? null,
+      expires_at: expiresAt,
     });
 
     cookieStore.delete('gmail_oauth_state');

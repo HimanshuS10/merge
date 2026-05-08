@@ -1,53 +1,36 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { fetchLatestMessages, refreshAccessToken } from "@/lib/gmail";
+import { getIntegration, updateAccessToken } from "@/lib/integrations";
+import { auth } from "@/lib/auth/server";
 
-function shouldRefresh(expiresAtRaw: string | undefined): boolean {
-  if (!expiresAtRaw) {
-    return false;
-  }
-
-  const expiresAt = Number(expiresAtRaw);
-  if (Number.isNaN(expiresAt)) {
-    return false;
-  }
-
+function shouldRefresh(expiresAt: number | null): boolean {
+  if (!expiresAt) return false;
   return Date.now() >= expiresAt - 30_000;
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  let accessToken = cookieStore.get("gmail_access_token")?.value;
-  const refreshToken = cookieStore.get("gmail_refresh_token")?.value;
-  const expiresAt = cookieStore.get("gmail_access_expires_at")?.value;
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+  }
 
-  if (!accessToken) {
+  const integration = await getIntegration(session.user.id, "gmail");
+  if (!integration) {
     return NextResponse.json(
-      { error: "Gmail is not connected yet. Start at /api/gmail/connect" },
+      { error: "Gmail is not connected yet. " },
       { status: 401 },
     );
   }
 
-  if (refreshToken && shouldRefresh(expiresAt)) {
+  let { access_token: accessToken } = integration;
+
+  if (integration.refresh_token && shouldRefresh(integration.expires_at)) {
     try {
-      const refreshed = await refreshAccessToken(refreshToken);
+      const refreshed = await refreshAccessToken(integration.refresh_token);
       accessToken = refreshed.access_token;
-      const nextExpiresAt = Date.now() + refreshed.expires_in * 1000;
-
-      cookieStore.set("gmail_access_token", refreshed.access_token, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30,
-      });
-
-      cookieStore.set("gmail_access_expires_at", String(nextExpiresAt), {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30,
+      await updateAccessToken(session.user.id, "gmail", {
+        access_token: refreshed.access_token,
+        expires_at: Date.now() + refreshed.expires_in * 1000,
       });
     } catch (error) {
       return NextResponse.json(

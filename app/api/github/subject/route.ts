@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getIntegration } from '@/lib/integrations';
+import { auth } from '@/lib/auth/server';
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url');
@@ -7,16 +9,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
 
-  const token =
-    req.cookies.get('github_access_token')?.value ?? process.env.GITHUB_TOKEN;
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+  }
 
-  if (!token) {
+  const integration = await getIntegration(session.user.id, 'github');
+  if (!integration) {
     return NextResponse.json({ error: 'GitHub not connected' }, { status: 401 });
   }
 
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${integration.access_token}`,
       Accept: 'application/vnd.github+json',
     },
   });
