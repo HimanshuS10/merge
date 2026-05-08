@@ -2,14 +2,7 @@
 
 import { auth } from '@/lib/auth/server';
 import Link from 'next/link';
-import { signout } from './auth/sign-out/actions';
 import Dashboard from '@/components/Dashboard';
-
-async function handleSignout(formData: FormData) {
-  'use server';
-
-  await signout(null, formData);
-}
 
 // export const dynamic = 'force-dynamic';
 
