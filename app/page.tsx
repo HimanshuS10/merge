@@ -1,5 +1,3 @@
-'use server';
-
 import { auth } from '@/lib/auth/server';
 import Link from 'next/link';
 import Dashboard from '@/components/Dashboard';
